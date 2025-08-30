@@ -73,19 +73,7 @@ def chat():
 --- 回答 ---
 """
 
-    # LLM API呼び出し部分を有効化
-    if GOOGLE_API_KEY:
-        try:
-            genai.configure(api_key=GOOGLE_API_KEY)
-            model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
-            print("DEBUG: LLM initialized successfully.")
-            response_text = model.generate_content(prompt).text
-            print(f"DEBUG: LLM response received: {response_text[:50]}...")
-        except Exception as e:
-            response_text = f"LLMからの応答エラー: {e}"
-            print(f"DEBUG: Error during LLM invocation: {e}")
-    else:
-        response_text = "APIキーが設定されていないため、LLMからの応答はできません。"
+    
     
 
     # LLM API呼び出し部分を有効化
