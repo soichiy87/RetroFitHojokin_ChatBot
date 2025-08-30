@@ -19,22 +19,21 @@ def read_file_content(filepath):
 # Assuming these files are in the same directory as main.py
 YOUKOU_FILE = os.path.join(os.path.dirname(__file__), 'youkou.txt')
 TEBIKI_FILE = os.path.join(os.path.dirname(__file__), 'tebiki.txt')
-API_KEY_FILE = os.path.join(os.path.dirname(__file__), 'apikey.txt') # この行を追加
 
 youkou_content = read_file_content(YOUKOU_FILE)
 tebiki_content = read_file_content(TEBIKI_FILE)
 
-# APIキーをファイルから読み込む
-try:
-    with open(API_KEY_FILE, 'r') as f:
-        GEMINI_API_KEY = f.read().strip()
-    genai.configure(api_key=GEMINI_API_KEY) # この行を修正
-except FileNotFoundError:
-    print(f"Warning: {API_KEY_FILE} not found. Please create it with your Gemini API key.")
-    GEMINI_API_KEY = None
-except Exception as e:
-    print(f"Error reading API key from {API_KEY_FILE}: {e}")
-    GEMINI_API_KEY = None
+# APIキーを環境変数から読み込む
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+else:
+    print("Error: GEMINI_API_KEY environment variable not set.")
+    # 環境変数が設定されていない場合の処理をここに記述
+    # 例: アプリケーションを終了させる、エラーメッセージを表示するなど
+    # デプロイ環境では必須なので、設定されていない場合は動作しないようにするのが一般的です。
+
 
 # Combine the content for RAG context
 # For a simple prototype, we'll pass all content as context.
@@ -87,4 +86,7 @@ def chat():
     return jsonify({"response": response_text})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # 開発環境でのみ実行されるように変更
+    # RenderではGunicornがアプリを起動するため、この行はデプロイ時には実行されません。
+    # app.run(debug=True)
+    pass
