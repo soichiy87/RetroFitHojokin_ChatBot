@@ -63,14 +63,15 @@ def chat():
         ("system", f"あなたは補助金に関する質問に答えるチャットボットです。以下の「補助金情報」を参考に、ユーザーの質問に正確に答えてください。補助金情報に記載されていない内容については、「補助金情報には記載がありません」と答えてください。\n\n--- 補助金情報 ---\n{{RAG_CONTEXT}}"),
         ("user", "{{user_message}}")
     ])
+    print(f"DEBUG: prompt_template defined: {bool(prompt_template)}")
 
     # LLM API呼び出し部分を有効化
     if GOOGLE_API_KEY:
         try:
             llm = ChatGoogleGenerativeAI(model="gemini-pro", google_api_key=GOOGLE_API_KEY)
             print("DEBUG: LLM initialized successfully.")
-            chain = prompt | llm | StrOutputParser()
-            response_text = chain.invoke({"input": prompt.messages[0].content + prompt.messages[1].content}) # promptを直接渡す
+            chain = prompt_template | llm | StrOutputParser()
+            response_text = chain.invoke({"user_message": user_message, "RAG_CONTEXT": RAG_CONTEXT})
             print(f"DEBUG: LLM response received: {response_text[:50]}...")
         except Exception as e:
             response_text = f"LLMからの応答エラー: {e}"
