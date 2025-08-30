@@ -1,3 +1,13 @@
-apikey.txt
-venv/
+# Python
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Environment variables
+.env
+
+# API key file
+apikey.txt

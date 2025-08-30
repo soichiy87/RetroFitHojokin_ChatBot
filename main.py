@@ -1,7 +1,9 @@
 # main.py
 from flask import Flask, request, jsonify, render_template
 import os
-import google.generativeai as genai # この行を追加
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 
 app = Flask(__name__)
 
@@ -24,15 +26,13 @@ youkou_content = read_file_content(YOUKOU_FILE)
 tebiki_content = read_file_content(TEBIKI_FILE)
 
 # APIキーを環境変数から読み込む
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+print(f"DEBUG: GOOGLE_API_KEY loaded: {bool(GOOGLE_API_KEY)}")
 
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-else:
-    print("Error: GEMINI_API_KEY environment variable not set.")
-    # 環境変数が設定されていない場合の処理をここに記述
-    # 例: アプリケーションを終了させる、エラーメッセージを表示するなど
-    # デプロイ環境では必須なので、設定されていない場合は動作しないようにするのが一般的です。
+if not GOOGLE_API_KEY:
+    print("Error: GOOGLE_API_KEY environment variable not set.")
+    # アプリケーションの起動は続けるが、LLM呼び出し時にエラーを返す
+    pass
 
 
 # Combine the content for RAG context
@@ -59,34 +59,25 @@ def chat():
 
     # Construct the prompt for the LLM
     # The LLM (Gemini) will act as the RAG generation component
-    prompt = f"""
-あなたは補助金に関する質問に答えるチャットボットです。
-以下の「補助金情報」を参考に、ユーザーの質問に正確に答えてください。
-補助金情報に記載されていない内容については、「補助金情報には記載がありません」と答えてください。
-
---- 補助金情報 ---
-{RAG_CONTEXT}
-
---- ユーザーの質問 ---
-{user_message}
-
---- 回答 ---
-"""
+    prompt_template = ChatPromptTemplate.from_messages([
+        ("system", f"あなたは補助金に関する質問に答えるチャットボットです。以下の「補助金情報」を参考に、ユーザーの質問に正確に答えてください。補助金情報に記載されていない内容については、「補助金情報には記載がありません」と答えてください。\n\n--- 補助金情報 ---\n{RAG_CONTEXT}"),
+        ("user", "{{user_message}}")
+    ])
+    prompt = prompt_template.format_messages(user_message=user_message)
 
     # LLM API呼び出し部分を有効化
-    if GEMINI_API_KEY:
+    if GOOGLE_API_KEY:
         try:
-            model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
-            response_text = model.generate_content(prompt).text
+            llm = ChatGoogleGenerativeAI(model="gemini-pro", google_api_key=GOOGLE_API_KEY)
+            print("DEBUG: LLM initialized successfully.")
+            chain = prompt | llm | StrOutputParser()
+            response_text = chain.invoke({"input": prompt.messages[0].content + prompt.messages[1].content}) # promptを直接渡す
+            print(f"DEBUG: LLM response received: {response_text[:50]}...")
         except Exception as e:
             response_text = f"LLMからの応答エラー: {e}"
+            print(f"DEBUG: Error during LLM invocation: {e}")
     else:
         response_text = "APIキーが設定されていないため、LLMからの応答はできません。"
 
     return jsonify({"response": response_text})
 
-if __name__ == '__main__':
-    # 開発環境でのみ実行されるように変更
-    # RenderではGunicornがアプリを起動するため、この行はデプロイ時には実行されません。
-    # app.run(debug=True)
-    pass

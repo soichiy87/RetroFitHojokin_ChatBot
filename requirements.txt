@@ -1,3 +1,5 @@
 Flask
-google-generativeai
+Jinja2
+langchain-google-genai
+langchain-core
 gunicorn
