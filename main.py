@@ -68,7 +68,7 @@ def chat():
     # LLM API呼び出し部分を有効化
     if GOOGLE_API_KEY:
         try:
-            llm = ChatGoogleGenerativeAI(model="gemini-pro", google_api_key=GOOGLE_API_KEY)
+            llm = ChatGoogleGenerativeAI(model="gemini-1.0-pro", google_api_key=GOOGLE_API_KEY)
             print("DEBUG: LLM initialized successfully.")
             chain = prompt_template | llm | StrOutputParser()
             response_text = chain.invoke({"user_message": user_message, "RAG_CONTEXT": RAG_CONTEXT})
