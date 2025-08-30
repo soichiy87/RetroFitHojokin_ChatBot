@@ -60,10 +60,9 @@ def chat():
     # Construct the prompt for the LLM
     # The LLM (Gemini) will act as the RAG generation component
     prompt_template = ChatPromptTemplate.from_messages([
-        ("system", f"あなたは補助金に関する質問に答えるチャットボットです。以下の「補助金情報」を参考に、ユーザーの質問に正確に答えてください。補助金情報に記載されていない内容については、「補助金情報には記載がありません」と答えてください。\n\n--- 補助金情報 ---\n{RAG_CONTEXT}"),
+        ("system", f"あなたは補助金に関する質問に答えるチャットボットです。以下の「補助金情報」を参考に、ユーザーの質問に正確に答えてください。補助金情報に記載されていない内容については、「補助金情報には記載がありません」と答えてください。\n\n--- 補助金情報 ---\n{{RAG_CONTEXT}}"),
         ("user", "{{user_message}}")
     ])
-    prompt = prompt_template.format_messages(user_message=user_message)
 
     # LLM API呼び出し部分を有効化
     if GOOGLE_API_KEY:
