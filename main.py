@@ -1,9 +1,7 @@
 # main.py
 from flask import Flask, request, jsonify, render_template
 import os
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
+import google.generativeai as genai
 
 app = Flask(__name__)
 
@@ -59,10 +57,35 @@ def chat():
 
     # Construct the prompt for the LLM
     # The LLM (Gemini) will act as the RAG generation component
-    prompt_template = ChatPromptTemplate.from_messages([
-        ("system", f"あなたは補助金に関する質問に答えるチャットボットです。以下の「補助金情報」を参考に、ユーザーの質問に正確に答えてください。補助金情報に記載されていない内容については、「補助金情報には記載がありません」と答えてください。\n\n--- 補助金情報 ---\n{{RAG_CONTEXT}}"),
-        ("user", "{{user_message}}")
-    ])
+    # Construct the prompt for the LLM
+    # The LLM (Gemini) will act as the RAG generation component
+    prompt = f"""
+あなたは補助金に関する質問に答えるチャットボットです。
+以下の「補助金情報」を参考に、ユーザーの質問に正確に答えてください。
+補助金情報に記載されていない内容については、「補助金情報には記載がありません」と答えてください。
+
+--- 補助金情報 ---
+{RAG_CONTEXT}
+
+--- ユーザーの質問 ---
+{user_message}
+
+--- 回答 ---
+"""
+
+    # LLM API呼び出し部分を有効化
+    if GOOGLE_API_KEY:
+        try:
+            genai.configure(api_key=GOOGLE_API_KEY)
+            model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+            print("DEBUG: LLM initialized successfully.")
+            response_text = model.generate_content(prompt).text
+            print(f"DEBUG: LLM response received: {response_text[:50]}...")
+        except Exception as e:
+            response_text = f"LLMからの応答エラー: {e}"
+            print(f"DEBUG: Error during LLM invocation: {e}")
+    else:
+        response_text = "APIキーが設定されていないため、LLMからの応答はできません。"
     print(f"DEBUG: prompt_template defined: {bool(prompt_template)}")
 
     # LLM API呼び出し部分を有効化
