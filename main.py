@@ -86,7 +86,7 @@ def chat():
             print(f"DEBUG: Error during LLM invocation: {e}")
     else:
         response_text = "APIキーが設定されていないため、LLMからの応答はできません。"
-    print(f"DEBUG: prompt_template defined: {bool(prompt_template)}")
+    
 
     # LLM API呼び出し部分を有効化
     if GOOGLE_API_KEY:
